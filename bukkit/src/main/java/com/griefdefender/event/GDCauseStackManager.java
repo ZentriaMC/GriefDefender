@@ -47,10 +47,11 @@ public final class GDCauseStackManager {
     @Nullable private EventCause cached_cause;
 
     public EventCause getCurrentCause() {
+        /* TODO: broken
         if (NMSUtil.getInstance().getRunningServerTicks() != tick_stored) {
-            this.cached_cause = null;
-            this.cause.clear();
+            clearCause();
         }
+        */
         if (this.cached_cause == null) {
             if (this.cause.isEmpty()) {
                 this.cached_cause = EventCause.of(GriefDefenderPlugin.getInstance());
@@ -104,6 +105,11 @@ public final class GDCauseStackManager {
 
     public Object peekCause() {
         return this.cause.get(0);
+    }
+
+    public void clearCause() {
+        cached_cause = null;
+        cause.clear();
     }
 
     public static GDCauseStackManager getInstance() {

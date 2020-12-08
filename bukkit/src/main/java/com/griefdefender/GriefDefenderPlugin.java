@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+import com.griefdefender.event.GDCauseStackManager;
 import com.griefdefender.provider.permissionsex.PermissionsExProvider;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -705,6 +706,10 @@ public class GriefDefenderPlugin {
             }
         }
         registerBaseCommands();
+        // TODO: gross hacks :/
+        GDBootstrap.getInstance().getServer().getScheduler().runTaskTimer(GDBootstrap.getInstance(), () -> {
+            GDCauseStackManager.getInstance().clearCause();
+        }, 0L, 1L);
         this.getLogger().info("Loaded successfully.");
     }
 
