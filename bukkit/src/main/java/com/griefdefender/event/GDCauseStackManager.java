@@ -71,11 +71,6 @@ public final class GDCauseStackManager {
             return this;
         }*/
 
-        // Cap the cause list
-        if (this.cause.size() >= 16) {
-            this.cause.remove(this.cause.size() - 1);
-        }
-
         tick_stored = NMSUtil.getInstance().getRunningServerTicks();
         this.cached_cause = null;
         this.cause.add(0, obj);
