@@ -24,18 +24,17 @@
  */
 package com.griefdefender.event;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.common.collect.Queues;
 import com.griefdefender.GriefDefenderPlugin;
 import com.griefdefender.api.event.EventCause;
 import com.griefdefender.cache.PermissionHolderCache;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.User;
 
-import java.util.Deque;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class GDCauseStackManager {
 
@@ -43,7 +42,7 @@ public final class GDCauseStackManager {
 
     private static GDCauseStackManager instance;
 
-    private final Deque<Object> cause = Queues.newArrayDeque();
+    private final CopyOnWriteArrayList<Object> cause = new CopyOnWriteArrayList<>();
 
     @Nullable private EventCause cached_cause;
 
@@ -74,17 +73,17 @@ public final class GDCauseStackManager {
 
         tick_stored = Sponge.getServer().getRunningTimeTicks();
         this.cached_cause = null;
-        this.cause.push(obj);
+        this.cause.add(0, obj);
         return this;
     }
 
     public Object popCause() {
         this.cached_cause = null;
-        return this.cause.pop();
+        return this.cause.remove(0);
     }
 
     public Object peekCause() {
-        return this.cause.peek();
+        return this.cause.get(0);
     }
 
     public static GDCauseStackManager getInstance() {
