@@ -67,7 +67,7 @@ public class CommandUntrustGroup extends BaseCommand {
     @Syntax("<group> [<accessor|builder|container|manager>]")
     @Subcommand("untrust group")
     public void execute(Player player, String target, @Optional String type) {
-        TrustType trustType = null;
+        final TrustType trustType;
         if (type == null) {
             trustType = TrustTypes.NONE;
         } else {
@@ -107,11 +107,9 @@ public class CommandUntrustGroup extends BaseCommand {
             return;
         }
 
-        GDCauseStackManager.getInstance().pushCause(player);
-        GDGroupTrustClaimEvent.Remove event =
-            new GDGroupTrustClaimEvent.Remove(claim, ImmutableList.of(group.getName()), trustType);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDGroupTrustClaimEvent.Remove event = GDCauseStackManager.getInstance().withCause(player, () -> {
+            return new GDGroupTrustClaimEvent.Remove(claim, ImmutableList.of(group.getName()), trustType).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(player, event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", group.getName()))));

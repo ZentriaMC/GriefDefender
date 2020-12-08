@@ -61,7 +61,7 @@ public class CommandAccessTrust extends BaseCommand {
             return;
         }
 
-        GDPermissionUser user = null;
+        final GDPermissionUser user;
         if (target.equalsIgnoreCase("public")) {
             user = GriefDefenderPlugin.PUBLIC_USER;
         } else {
@@ -102,12 +102,9 @@ public class CommandAccessTrust extends BaseCommand {
             }
         }
 
-        GDCauseStackManager.getInstance().pushCause(src);
-        GDUserTrustClaimEvent.Add
-            event =
-            new GDUserTrustClaimEvent.Add(claim, ImmutableList.of(user.getUniqueId()), TrustTypes.ACCESSOR);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDUserTrustClaimEvent.Add event = GDCauseStackManager.getInstance().withCause(src, () -> {
+            return new GDUserTrustClaimEvent.Add(claim, ImmutableList.of(user.getUniqueId()), TrustTypes.ACCESSOR).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(src, event.getMessage().orElse(event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", user.getName())))));

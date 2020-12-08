@@ -42,13 +42,13 @@ import com.griefdefender.api.permission.PermissionResult;
 import com.griefdefender.api.permission.ResultTypes;
 import com.griefdefender.api.permission.flag.Flag;
 import com.griefdefender.api.permission.flag.FlagData;
-import com.griefdefender.api.permission.flag.Flags;
 import com.griefdefender.cache.MessageCache;
 import com.griefdefender.cache.PermissionHolderCache;
 import com.griefdefender.claim.GDClaim;
 import com.griefdefender.configuration.MessageStorage;
 import com.griefdefender.configuration.category.CustomFlagGroupCategory;
 import com.griefdefender.event.GDCauseStackManager;
+import com.griefdefender.event.GDCauseStackManager.CauseStack;
 import com.griefdefender.event.GDFlagPermissionEvent;
 import com.griefdefender.internal.pagination.PaginationList;
 import com.griefdefender.internal.util.NMSUtil;
@@ -59,10 +59,10 @@ import com.griefdefender.permission.GDPermissions;
 import com.griefdefender.permission.flag.GDActiveFlagData;
 import com.griefdefender.permission.flag.GDFlagDefinition;
 import com.griefdefender.permission.flag.GDFlags;
-import com.griefdefender.permission.ui.UIFlagData;
 import com.griefdefender.permission.ui.MenuType;
-import com.griefdefender.permission.ui.UIHelper;
+import com.griefdefender.permission.ui.UIFlagData;
 import com.griefdefender.permission.ui.UIFlagData.FlagContextHolder;
+import com.griefdefender.permission.ui.UIHelper;
 import com.griefdefender.provider.PermissionProvider.PermissionDataType;
 import com.griefdefender.registry.FlagRegistryModule;
 import com.griefdefender.text.action.GDCallbackHolder;
@@ -70,7 +70,6 @@ import com.griefdefender.util.CauseContextHelper;
 import com.griefdefender.util.ChatCaptureUtil;
 import com.griefdefender.util.PaginationUtil;
 import com.griefdefender.util.PermissionUtil;
-
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.adapter.bukkit.TextAdapter;
@@ -78,7 +77,6 @@ import net.kyori.text.event.ClickEvent;
 import net.kyori.text.event.HoverEvent;
 import net.kyori.text.format.TextColor;
 import net.kyori.text.format.TextDecoration;
-
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -196,17 +194,17 @@ public abstract class ClaimFlagBase extends BaseCommand {
                 }
                 return;
             } else if (flag != null && value != null) {
-                GDCauseStackManager.getInstance().pushCause(player);
-                PermissionResult result = CommandHelper.addFlagPermission(player, this.subject, claim, flag, target, PermissionUtil.getInstance().getTristateFromString(value.toUpperCase()), contextSet);
-                final String flagTarget = target;
-                if (result.getResultType() == ResultTypes.TARGET_NOT_VALID) {
-                    GriefDefenderPlugin.sendMessage(player, MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.FLAG_INVALID_TARGET,
-                            ImmutableMap.of("target", flagTarget,
-                                    "flag", flag)));
-                } else if (result.getResultType() == ResultTypes.NO_PERMISSION) {
-                    GriefDefenderPlugin.sendMessage(player, MessageCache.getInstance().PERMISSION_FLAG_USE);
-                }
-                GDCauseStackManager.getInstance().popCause();
+                try (CauseStack unused = GDCauseStackManager.getInstance().doPushCause(player)) {
+                    PermissionResult result = CommandHelper.addFlagPermission(player, this.subject, claim, flag, target, PermissionUtil.getInstance().getTristateFromString(value.toUpperCase()), contextSet);
+                    final String flagTarget = target;
+                    if (result.getResultType() == ResultTypes.TARGET_NOT_VALID) {
+                        GriefDefenderPlugin.sendMessage(player, MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.FLAG_INVALID_TARGET,
+                                ImmutableMap.of("target", flagTarget,
+                                        "flag", flag)));
+                    } else if (result.getResultType() == ResultTypes.NO_PERMISSION) {
+                        GriefDefenderPlugin.sendMessage(player, MessageCache.getInstance().PERMISSION_FLAG_USE);
+                    }
+                };
                 return;
             }
         } else {

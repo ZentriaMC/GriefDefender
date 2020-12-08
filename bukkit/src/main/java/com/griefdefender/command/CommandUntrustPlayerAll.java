@@ -68,7 +68,7 @@ public class CommandUntrustPlayerAll extends BaseCommand {
     @Syntax("<player> [<accessor|builder|container|manager>]")
     @Subcommand("untrustall player")
     public void execute(Player player, String target, @Optional String type) {
-        TrustType trustType = null;
+        final TrustType trustType;
         if (type == null) {
             trustType = TrustTypes.NONE;
         } else {
@@ -99,9 +99,11 @@ public class CommandUntrustPlayerAll extends BaseCommand {
         }
 
         GDPlayerData playerData = GriefDefenderPlugin.getInstance().dataStore.getOrCreatePlayerData(player.getWorld(), player.getUniqueId());
-        Set<Claim> claimList = null;
+        final Set<Claim> claimList;
         if (playerData != null) {
             claimList = playerData.getInternalClaims();
+        } else {
+            claimList = null;
         }
 
         if (playerData == null || claimList == null || claimList.size() == 0) {
@@ -109,11 +111,9 @@ public class CommandUntrustPlayerAll extends BaseCommand {
             return;
         }
 
-        GDCauseStackManager.getInstance().pushCause(player);
-        GDUserTrustClaimEvent.Remove
-            event = new GDUserTrustClaimEvent.Remove(new ArrayList<>(claimList), ImmutableList.of(user.getUniqueId()), trustType);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDUserTrustClaimEvent.Remove event = GDCauseStackManager.getInstance().withCause(player, () -> {
+            return new GDUserTrustClaimEvent.Remove(new ArrayList<>(claimList), ImmutableList.of(user.getUniqueId()), trustType).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(player, event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", user.getName()))));

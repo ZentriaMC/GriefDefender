@@ -183,10 +183,9 @@ public abstract class BaseStorage {
             return new GDClaimResult(ClaimResultType.CLAIM_NOT_FOUND);
         }
 
-        GDCauseStackManager.getInstance().pushCause(source);
-        GDRemoveClaimEvent.Delete event = new GDRemoveClaimEvent.Delete(ImmutableList.copyOf(claimsToDelete));
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDRemoveClaimEvent.Delete event = GDCauseStackManager.getInstance().withCause(source, () -> {
+            return new GDRemoveClaimEvent.Delete(ImmutableList.copyOf(claimsToDelete)).post();
+        });
         if (event.cancelled()) {
             return new GDClaimResult(ClaimResultType.CLAIM_EVENT_CANCELLED,
                 event.getMessage().orElse(GriefDefenderPlugin.getInstance().messageData.getMessage(MessageStorage.DELETE_ALL_TYPE_DENY,

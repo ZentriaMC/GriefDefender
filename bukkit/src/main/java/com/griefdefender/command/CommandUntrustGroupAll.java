@@ -32,12 +32,10 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Subcommand;
 import co.aikar.commands.annotation.Syntax;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.griefdefender.GDPlayerData;
 import com.griefdefender.GriefDefenderPlugin;
-import com.griefdefender.api.GriefDefender;
 import com.griefdefender.api.claim.Claim;
 import com.griefdefender.api.claim.TrustType;
 import com.griefdefender.api.claim.TrustTypes;
@@ -67,7 +65,7 @@ public class CommandUntrustGroupAll extends BaseCommand {
     @Syntax("<group> [<accessor|builder|container|manager>]")
     @Subcommand("untrustall group")
     public void execute(Player player, String target, @Optional String type) {
-        TrustType trustType = null;
+        final TrustType trustType;
         if (type == null) {
             trustType = TrustTypes.NONE;
         } else {
@@ -88,9 +86,11 @@ public class CommandUntrustGroupAll extends BaseCommand {
         }
 
         GDPlayerData playerData = GriefDefenderPlugin.getInstance().dataStore.getOrCreatePlayerData(player.getWorld(), player.getUniqueId());
-        Set<Claim> claimList = null;
+        final Set<Claim> claimList;
         if (playerData != null) {
             claimList = playerData.getInternalClaims();
+        } else {
+            claimList = null;
         }
 
         if (playerData == null || claimList == null || claimList.size() == 0) {
@@ -98,11 +98,9 @@ public class CommandUntrustGroupAll extends BaseCommand {
             return;
         }
 
-        GDCauseStackManager.getInstance().pushCause(player);
-        GDGroupTrustClaimEvent.Remove
-            event = new GDGroupTrustClaimEvent.Remove(new ArrayList<>(claimList), ImmutableList.of(group.getName()), trustType);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDGroupTrustClaimEvent.Remove event = GDCauseStackManager.getInstance().withCause(player, () -> {
+            return new GDGroupTrustClaimEvent.Remove(new ArrayList<>(claimList), ImmutableList.of(group.getName()), trustType).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(player, event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", group.getName()))));

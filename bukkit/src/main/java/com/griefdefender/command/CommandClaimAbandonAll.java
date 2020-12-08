@@ -168,10 +168,9 @@ public class CommandClaimAbandonAll extends BaseCommand {
                 return;
             }
             if (!allowedClaims.isEmpty()) {
-                GDCauseStackManager.getInstance().pushCause(user);
-                GDRemoveClaimEvent.Abandon event = new GDRemoveClaimEvent.Abandon(ImmutableList.copyOf(allowedClaims));
-                GriefDefender.getEventManager().post(event);
-                GDCauseStackManager.getInstance().popCause();
+                GDRemoveClaimEvent.Abandon event = GDCauseStackManager.getInstance().withCause(user, () -> {
+                    return new GDRemoveClaimEvent.Abandon(ImmutableList.copyOf(allowedClaims)).post();
+                });
                 if (event.cancelled()) {
                     TextAdapter.sendComponent(user.getOnlinePlayer(), event.getMessage().orElse(MessageCache.getInstance().PLUGIN_EVENT_CANCEL).color(TextColor.RED));
                     return;

@@ -150,11 +150,9 @@ public class CommandClaimAbandon extends BaseCommand {
 
     private static Consumer<CommandSender> createConfirmationConsumer(Player source, GDPermissionUser user, GDClaim claim, boolean abandonTopClaim) {
         return confirm -> {
-
-            GDCauseStackManager.getInstance().pushCause(source);
-            GDRemoveClaimEvent.Abandon event = new GDRemoveClaimEvent.Abandon(claim);
-            GriefDefender.getEventManager().post(event);
-            GDCauseStackManager.getInstance().popCause();
+            GDRemoveClaimEvent.Abandon event = GDCauseStackManager.getInstance().withCause(source, () -> {
+                return new GDRemoveClaimEvent.Abandon(claim).post();
+            });
             if (event.cancelled()) {
                 TextAdapter.sendComponent(source, event.getMessage().orElse(MessageCache.getInstance().PLUGIN_EVENT_CANCEL));
                 return;

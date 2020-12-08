@@ -114,11 +114,9 @@ public class CommandTrustGroup extends BaseCommand {
             return;
         }
 
-        GDCauseStackManager.getInstance().pushCause(player);
-        GDGroupTrustClaimEvent.Remove event =
-            new GDGroupTrustClaimEvent.Remove(claim, ImmutableList.of(group.getName()), TrustTypes.NONE);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDGroupTrustClaimEvent.Remove event = GDCauseStackManager.getInstance().withCause(player, () -> {
+            return new GDGroupTrustClaimEvent.Remove(claim, ImmutableList.of(group.getName()), TrustTypes.NONE).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(player, event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", group))));

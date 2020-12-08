@@ -32,31 +32,27 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Subcommand;
 import co.aikar.commands.annotation.Syntax;
-
-import com.griefdefender.configuration.MessageStorage;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.bukkit.TextAdapter;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.griefdefender.GDPlayerData;
 import com.griefdefender.GriefDefenderPlugin;
-import com.griefdefender.api.GriefDefender;
 import com.griefdefender.api.claim.TrustType;
 import com.griefdefender.api.claim.TrustTypes;
 import com.griefdefender.cache.MessageCache;
 import com.griefdefender.cache.PermissionHolderCache;
 import com.griefdefender.claim.GDClaim;
+import com.griefdefender.configuration.MessageStorage;
 import com.griefdefender.event.GDCauseStackManager;
 import com.griefdefender.event.GDUserTrustClaimEvent;
 import com.griefdefender.permission.GDPermissionUser;
 import com.griefdefender.permission.GDPermissions;
 import com.griefdefender.util.PermissionUtil;
+import net.kyori.text.Component;
+import net.kyori.text.adapter.bukkit.TextAdapter;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.bukkit.entity.Player;
 
 @CommandAlias("%griefdefender")
 @CommandPermission(GDPermissions.COMMAND_TRUST_PLAYER)
@@ -72,7 +68,7 @@ public class CommandTrustPlayer extends BaseCommand {
     @Syntax("<player> [<accessor|builder|container|manager>]")
     @Subcommand("trust player")
     public void execute(Player player, String target, @Optional String type) {
-        TrustType trustType = null;
+        final TrustType trustType;
         if (type == null) {
             trustType = TrustTypes.BUILDER;
         } else {
@@ -83,7 +79,7 @@ public class CommandTrustPlayer extends BaseCommand {
             }
         }
 
-        GDPermissionUser user = null;
+        final GDPermissionUser user;
         if (target.equalsIgnoreCase("public")) {
             user = GriefDefenderPlugin.PUBLIC_USER;
         } else {
@@ -142,12 +138,9 @@ public class CommandTrustPlayer extends BaseCommand {
             }
         }
 
-        GDCauseStackManager.getInstance().pushCause(player);
-        GDUserTrustClaimEvent.Add
-            event =
-            new GDUserTrustClaimEvent.Add(claim, ImmutableList.of(user.getUniqueId()), trustType);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDUserTrustClaimEvent.Add event = GDCauseStackManager.getInstance().withCause(player, () -> {
+            return new GDUserTrustClaimEvent.Add(claim, ImmutableList.of(user.getUniqueId()), trustType).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(player, event.getMessage().orElse(event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", user.getName())))));

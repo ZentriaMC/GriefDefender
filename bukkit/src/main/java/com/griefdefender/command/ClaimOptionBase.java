@@ -54,6 +54,7 @@ import com.griefdefender.cache.PermissionHolderCache;
 import com.griefdefender.claim.GDClaim;
 import com.griefdefender.configuration.MessageStorage;
 import com.griefdefender.event.GDCauseStackManager;
+import com.griefdefender.event.GDCauseStackManager.CauseStack;
 import com.griefdefender.internal.pagination.PaginationList;
 import com.griefdefender.listener.CommonEntityEventHandler;
 import com.griefdefender.permission.GDPermissionHolder;
@@ -259,16 +260,16 @@ public abstract class ClaimOptionBase extends BaseCommand {
                         type = MenuType.CLAIM;
                     }
                 }
-                GDCauseStackManager.getInstance().pushCause(player);
-                PermissionUtil.getInstance().setOptionValue(this.subject, option.getPermission(), value, contextSet);
-                TextAdapter.sendComponent(player, MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.OPTION_SET_TARGET,
-                                ImmutableMap.of(
-                                        "type", type.name().toUpperCase(),
-                                        "option", option.getName(),
-                                        "contexts", UIHelper.getFriendlyContextString(claim, contextSet),
-                                        "value", TextComponent.of(value).color(TextColor.LIGHT_PURPLE),
-                                        "target", subject.getFriendlyName())));
-                GDCauseStackManager.getInstance().popCause();
+                try (CauseStack unused = GDCauseStackManager.getInstance().doPushCause(player)) {
+                    PermissionUtil.getInstance().setOptionValue(this.subject, option.getPermission(), value, contextSet);
+                    TextAdapter.sendComponent(player, MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.OPTION_SET_TARGET,
+                            ImmutableMap.of(
+                                    "type", type.name().toUpperCase(),
+                                    "option", option.getName(),
+                                    "contexts", UIHelper.getFriendlyContextString(claim, contextSet),
+                                    "value", TextComponent.of(value).color(TextColor.LIGHT_PURPLE),
+                                    "target", subject.getFriendlyName())));
+                }
                 return;
             }
         }

@@ -66,7 +66,6 @@ import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -139,14 +138,14 @@ public class EconomyUtil {
     private Consumer<CommandSender> economyClaimBuyConfirmed(Player player, GDPlayerData playerData, int height, double requiredFunds, Vector3i lesserBoundaryCorner, Vector3i greaterBoundaryCorner, ClaimType claimType, boolean cuboid, Claim parent) {
         return confirm -> {
             // try to create a new claim
-            ClaimResult result = null;
-            GDCauseStackManager.getInstance().pushCause(player);
-            result = GriefDefenderPlugin.getInstance().dataStore.createClaim(
-                    player.getWorld(),
-                    lesserBoundaryCorner,
-                    greaterBoundaryCorner,
-                    claimType, player.getUniqueId(), cuboid);
-            GDCauseStackManager.getInstance().popCause();
+            ClaimResult result = GDCauseStackManager.getInstance().withCause(player, () -> {
+                return GriefDefenderPlugin.getInstance().dataStore.createClaim(
+                        player.getWorld(),
+                        lesserBoundaryCorner,
+                        greaterBoundaryCorner,
+                        claimType, player.getUniqueId(), cuboid
+                );
+            });
 
             GDClaim gdClaim = (GDClaim) result.getClaim().orElse(null);
             // if it didn't succeed, tell the player why

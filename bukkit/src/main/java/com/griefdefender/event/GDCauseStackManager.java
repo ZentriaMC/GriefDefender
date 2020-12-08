@@ -32,6 +32,7 @@ import org.bukkit.OfflinePlayer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -81,6 +82,23 @@ public final class GDCauseStackManager {
         return this;
     }
 
+    public CauseStack doPushCause(Object cause) {
+        pushCause(cause);
+        return CauseStack.INSTANCE;
+    }
+
+    public <T> T withCause(Object cause, Supplier<T> supplier) {
+        try (CauseStack unused = doPushCause(cause)) {
+            return supplier.get();
+        }
+    }
+
+    public void withCause(Object cause, Runnable runnable) {
+        try (CauseStack unused = doPushCause(cause)) {
+            runnable.run();
+        }
+    }
+
     public Object popCause() {
         this.cached_cause = null;
         if (this.cause.isEmpty()) {
@@ -99,5 +117,16 @@ public final class GDCauseStackManager {
 
     static {
         instance = new GDCauseStackManager();
+    }
+
+    public static class CauseStack implements AutoCloseable {
+        private static final CauseStack INSTANCE = new CauseStack();
+
+        private CauseStack() {}
+
+        @Override
+        public void close() {
+            instance.popCause();
+        }
     }
 }

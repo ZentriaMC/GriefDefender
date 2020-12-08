@@ -97,9 +97,9 @@ public class CommandClaimDelete extends BaseCommand {
     private static Consumer<CommandSender> createConfirmationConsumer(Player player, Claim claim, boolean deleteTopLevelClaim) {
         return confirm -> {
             final GDPlayerData playerData = GriefDefenderPlugin.getInstance().dataStore.getOrCreatePlayerData(player.getWorld(), player.getUniqueId());
-            GDCauseStackManager.getInstance().pushCause(player);
-            ClaimResult claimResult = GriefDefenderPlugin.getInstance().dataStore.deleteClaim(claim, !deleteTopLevelClaim);
-            GDCauseStackManager.getInstance().popCause();
+            ClaimResult claimResult = GDCauseStackManager.getInstance().withCause(player, () -> {
+                return GriefDefenderPlugin.getInstance().dataStore.deleteClaim(claim, !deleteTopLevelClaim);
+            });
             if (!claimResult.successful()) {
                 GriefDefenderPlugin.sendMessage(player, claimResult.getMessage().orElse(MessageCache.getInstance().PLUGIN_EVENT_CANCEL));
                 return;

@@ -45,6 +45,7 @@ import com.griefdefender.cache.MessageCache;
 import com.griefdefender.claim.GDClaimManager;
 import com.griefdefender.configuration.MessageStorage;
 import com.griefdefender.event.GDCauseStackManager;
+import com.griefdefender.event.GDCauseStackManager.CauseStack;
 import com.griefdefender.event.GDRemoveClaimEvent;
 import com.griefdefender.permission.GDPermissionManager;
 import com.griefdefender.permission.GDPermissionUser;
@@ -139,10 +140,9 @@ public class CommandClaimAbandonWorld extends BaseCommand {
                 }
 
                 if (!allowedClaims.isEmpty()) {
-                    GDCauseStackManager.getInstance().pushCause(user);
-                    GDRemoveClaimEvent.Abandon event = new GDRemoveClaimEvent.Abandon(ImmutableList.copyOf(allowedClaims));
-                    GriefDefender.getEventManager().post(event);
-                    GDCauseStackManager.getInstance().popCause();
+                    GDRemoveClaimEvent.Abandon event = GDCauseStackManager.getInstance().withCause(user, () -> {
+                        return new GDRemoveClaimEvent.Abandon(ImmutableList.copyOf(allowedClaims)).post();
+                    });
                     if (event.cancelled()) {
                         TextAdapter.sendComponent(source, event.getMessage().orElse(MessageCache.getInstance().PLUGIN_EVENT_CANCEL).color(TextColor.RED));
                         return;

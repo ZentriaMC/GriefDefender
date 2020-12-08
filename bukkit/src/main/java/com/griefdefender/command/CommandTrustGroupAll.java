@@ -31,12 +31,10 @@ import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Subcommand;
 import co.aikar.commands.annotation.Syntax;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.griefdefender.GDPlayerData;
 import com.griefdefender.GriefDefenderPlugin;
-import com.griefdefender.api.GriefDefender;
 import com.griefdefender.api.claim.Claim;
 import com.griefdefender.api.claim.TrustType;
 import com.griefdefender.cache.MessageCache;
@@ -85,9 +83,11 @@ public class CommandTrustGroupAll extends BaseCommand {
         }
 
         GDPlayerData playerData = GriefDefenderPlugin.getInstance().dataStore.getOrCreatePlayerData(player.getWorld(), player.getUniqueId());
-        Set<Claim> claimList = null;
+        final Set<Claim> claimList;
         if (playerData != null) {
             claimList = playerData.getInternalClaims();
+        } else {
+            claimList = null;
         }
 
         if (playerData == null || claimList == null || claimList.size() == 0) {
@@ -95,11 +95,9 @@ public class CommandTrustGroupAll extends BaseCommand {
             return;
         }
 
-        GDCauseStackManager.getInstance().pushCause(player);
-        GDGroupTrustClaimEvent.Add
-            event = new GDGroupTrustClaimEvent.Add(new ArrayList<>(claimList), ImmutableList.of(group.getName()), trustType);
-        GriefDefender.getEventManager().post(event);
-        GDCauseStackManager.getInstance().popCause();
+        GDGroupTrustClaimEvent.Add event = GDCauseStackManager.getInstance().withCause(player, () -> {
+            return new GDGroupTrustClaimEvent.Add(new ArrayList<>(claimList), ImmutableList.of(group.getName()), trustType).post();
+        });
         if (event.cancelled()) {
             TextAdapter.sendComponent(player, event.getMessage().orElse(MessageStorage.MESSAGE_DATA.getMessage(MessageStorage.TRUST_PLUGIN_CANCEL,
                     ImmutableMap.of("target", group))));
