@@ -24,11 +24,15 @@
  */
 package com.griefdefender.event;
 
+import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import com.griefdefender.GriefDefenderPlugin;
 import com.griefdefender.api.event.EventCause;
 import com.griefdefender.cache.PermissionHolderCache;
 import com.griefdefender.internal.util.NMSUtil;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,7 +40,7 @@ import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class GDCauseStackManager {
+public final class GDCauseStackManager implements Listener {
 
     private int tick_stored;
 
@@ -107,9 +111,14 @@ public final class GDCauseStackManager {
         return this.cause.get(0);
     }
 
-    public void clearCause() {
+    private void clearCause() {
         cached_cause = null;
         cause.clear();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onTick(ServerTickStartEvent event) {
+        clearCause();
     }
 
     public static GDCauseStackManager getInstance() {

@@ -637,6 +637,7 @@ public class GriefDefenderPlugin {
         Bukkit.getPluginManager().registerEvents(new EntityEventHandler(dataStore), GDBootstrap.getInstance());
         Bukkit.getPluginManager().registerEvents(new WorldEventHandler(), GDBootstrap.getInstance());
         Bukkit.getPluginManager().registerEvents(new NMSUtil(), GDBootstrap.getInstance());
+        Bukkit.getPluginManager().registerEvents(GDCauseStackManager.getInstance(), GDBootstrap.getInstance());
 
         // run cleanup task
         int cleanupTaskInterval = GriefDefenderPlugin.getGlobalConfig().getConfig().claim.expirationCleanupInterval;
@@ -706,10 +707,6 @@ public class GriefDefenderPlugin {
             }
         }
         registerBaseCommands();
-        // TODO: gross hacks :/
-        GDBootstrap.getInstance().getServer().getScheduler().runTaskTimer(GDBootstrap.getInstance(), () -> {
-            GDCauseStackManager.getInstance().clearCause();
-        }, 0L, 1L);
         this.getLogger().info("Loaded successfully.");
     }
 
