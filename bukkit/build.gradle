@@ -107,7 +107,9 @@ sourceSets {
 }
 
 dependencies {
-    compile project(path: ":GriefDefenderAPI")
+    compile(project(path: ":GriefDefenderAPI")) {
+        transitive = false
+    }
     compile project (':common')
     compileOnly "com.griefdefender:adapter:$adapterVersion"
     compileOnly "com.griefdefender:reflect-helper:1.0"
