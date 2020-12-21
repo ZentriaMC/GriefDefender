@@ -195,6 +195,14 @@ public class CommandClaimAbandon extends BaseCommand {
             }
 
             if (!claim.isAdminClaim()) {
+                final Claim parentClaim = claim.getParent().orElse(null);
+                if (parentClaim != null && parentClaim.isTown() && parentClaim.isUserTrusted(user.getUniqueId(), TrustTypes.MANAGER)) {
+                    int remainingBlocks = playerData.getRemainingClaimBlocks();
+                    Component message = GriefDefenderPlugin.getInstance().messageData.getMessage("abandon-success", ImmutableMap.of("amount", remainingBlocks));
+                    GriefDefenderPlugin.sendMessage(source, message);
+                    return;
+                }
+
                 final double abandonReturnRatio = GDPermissionManager.getInstance().getInternalOptionValue(TypeToken.of(Double.class), user, Options.ABANDON_RETURN_RATIO, claim);
                 if (GriefDefenderPlugin.getInstance().isEconomyModeEnabled()) {
                     final Economy economy = GriefDefenderPlugin.getInstance().getVaultProvider().getApi();
