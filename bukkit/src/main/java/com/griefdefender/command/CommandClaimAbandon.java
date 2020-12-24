@@ -81,16 +81,10 @@ public class CommandClaimAbandon extends BaseCommand {
     public void execute(Player player) {
         final GDClaim claim = GriefDefenderPlugin.getInstance().dataStore.getClaimAt(player.getLocation());
         final UUID ownerId = claim.getOwnerUniqueId();
-        GDPermissionUser user = null;
-        if (ownerId != null) {
-            user = PermissionHolderCache.getInstance().getOrCreateUser(ownerId);
-        } else {
-            user = PermissionHolderCache.getInstance().getOrCreateUser(player);
-        }
+        final GDPermissionUser user = PermissionHolderCache.getInstance().getOrCreateUser(player.getUniqueId());
         final GDPlayerData playerData = user.getInternalPlayerData();
 
         final boolean isAdmin = playerData.canIgnoreClaim(claim);
-        final boolean isTown = claim.isTown();
         if (claim.isWilderness()) {
             GriefDefenderPlugin.sendMessage(player, MessageCache.getInstance().ABANDON_CLAIM_MISSING);
             return;
@@ -120,6 +114,21 @@ public class CommandClaimAbandon extends BaseCommand {
                         return;
                     }
                 }
+            }
+        }
+
+        if (!isAdmin && claim.isTown() && claim.children.size() > 0) {
+            Set<Claim> childClaims = new HashSet<>();
+            for(Claim child : claim.getChildren(true)) {
+                if (child.isBasicClaim() && child.getOwnerUniqueId().equals(user.getUniqueId())) {
+                    childClaims.add(child);
+                }
+            }
+
+            if (!childClaims.isEmpty()) {
+                GriefDefenderPlugin.sendMessage(player, TextComponent.of("Abandon town failed! You must abandon all basic children claims owned by you first.", TextColor.RED));
+                CommandHelper.showClaims(player, childClaims, 0, true);
+                return;
             }
         }
 
